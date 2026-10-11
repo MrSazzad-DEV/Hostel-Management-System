@@ -1,0 +1,36 @@
+services:
+  - type: web
+    name: haven-hostel
+    runtime: node
+    region: singapore
+    plan: starter
+    buildCommand: npm ci && npm run build --workspace client
+    preDeployCommand: npm run db:seed
+    startCommand: npm run start:prod --workspace server
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: HOST
+        value: 0.0.0.0
+      - key: DATABASE_URL
+        fromDatabase:
+          name: haven-hostel-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: BOOTSTRAP_ADMIN_EMAIL
+        sync: false
+      - key: BOOTSTRAP_ADMIN_PASSWORD
+        sync: false
+      - key: BOOTSTRAP_ADMIN_NAME
+        sync: false
+
+databases:
+  - name: haven-hostel-db
+    databaseName: haven_hostel
+    user: haven_hostel
+    region: singapore
+    plan: basic-256mb
+    postgresMajorVersion: "16"
+    ipAllowList: []
