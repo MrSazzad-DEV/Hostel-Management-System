@@ -1,4 +1,4 @@
-# Haven — Hostel Management System
+# Sazzad — Hostel Management System
 
 A full-stack hostel operations MVP built with React, Express, and PostgreSQL. It includes an authenticated staff workspace for resident records, room/bed occupancy, rent payments, and maintenance requests.
 
@@ -36,20 +36,26 @@ Do not expose the development/LAN setup directly to the public internet. Its loc
 
 **Demo login:** `admin@hostel.local` / `ChangeMe123!`. This MVP has no password-management screen or staff-provisioning UI. Before deployment, replace the demo account through a secure operator workflow, use a unique long `JWT_SECRET`, and serve the app over HTTPS. Do not use the sample credentials or secret in production.
 
-## Public internet deployment (Render)
+## Public website on GitHub Pages + secure API on Render
 
-[`render.yaml`](render.yaml) defines the production web service and a private PostgreSQL 16 database in Singapore. The Render web service builds the React frontend and serves it together with the Express API over Render's HTTPS endpoint. The database has no public IP allow list, so only the Render service can reach it. Production enables browser security headers and rate-limits sign-in attempts.
+GitHub Pages serves static files; it cannot run Express or PostgreSQL. The existing public Pages address currently shows the repository's README, not the app. This project includes [`deploy-pages.yml`](.github/workflows/deploy-pages.yml) so Actions can build and publish the actual mobile-responsive React frontend at `https://mrsazzad-dev.github.io/Hostel-Management-System/`, while a Render HTTPS web service runs the API and a private PostgreSQL database.
 
-**Public hosting is not activated just by preparing this project.** Render account authentication, billing choices, a GitHub repository linked to Render, and confirmation of the current provider charges are required. The Blueprint intentionally selects paid `starter` web-service and `basic-256mb` database plans, rather than putting residents' or billing data on an expiring hobby database. Review current prices and backup/retention options on Render before approving creation; never expose the database URL or open its IP allow list to the internet.
+### Publish and connect both services
 
-1. Create a **private** GitHub repository, and push this project to its default branch. Do not upload `.env`, passwords, API tokens, or resident information.
-2. Sign in or create an account at [Render](https://dashboard.render.com). Review the web-service and database plan prices before continuing.
-3. In Render, select **New → Blueprint**, then connect the repository. Render will read [`render.yaml`](render.yaml) and show the services and planned paid resources for confirmation.
-4. Before creating them, set the requested secret variables. `BOOTSTRAP_ADMIN_EMAIL` is your own administrator email, `BOOTSTRAP_ADMIN_PASSWORD` is a new unique password with at least 16 characters, and `BOOTSTRAP_ADMIN_NAME` is your name. Never reuse the local demo password.
-5. Review the resource plan, region, and account charges; create the Blueprint only if you approve the displayed costs. Render provisions the private database, runs `npm run db:seed` to apply the schema and create just the first administrator (not the local demo residents or payment records), builds the site, and checks `/api/health`.
-6. Once Render marks the web service **Live**, use its `https://…onrender.com` URL to sign in from phones, laptops, or other networks. Register a custom domain in Render if desired.
+1. **Publish the project files** to the `main` branch of `mrsazzad-dev/Hostel-Management-System`. Keep `.env` out of Git. GitHub Pages showing the README means the app deployment has not yet run.
+2. On GitHub, open the repository's **Settings → Pages** and set the build/deployment source to **GitHub Actions**.
+3. On [Render](https://dashboard.render.com), open **New → Blueprint** and select the repository. Review the charges before creating any resources. [`render.yaml`](render.yaml) provisions the API service, a private Singapore PostgreSQL database, a strong generated JWT key, production security headers, and sign-in rate limits.
+4. When the first Render deploy is **Live**, copy the service's exact `https://…onrender.com` base URL. In GitHub repository **Settings → Secrets and variables → Actions → Variables**, create `VITE_API_URL` with that base URL (no trailing slash). It is the HTTPS API address, not the GitHub Pages address.
+5. On Render, keep `CLIENT_ORIGINS` set to `https://mrsazzad-dev.github.io`. The API only permits browser calls from the configured origin; the Postgres database has no public inbound IP allow list.
+6. Push the project changes to `main`, or run **Actions → Deploy public website → Run workflow**. The Pages workflow uses `VITE_API_URL` to build the website and publishes `client/dist`.
+7. Wait for the GitHub Actions run to pass, then open `https://mrsazzad-dev.github.io/Hostel-Management-System/` using mobile data or another Wi-Fi network. Create the first administrator with a new email and unique password (at least 16 characters) when Render prompts for `BOOTSTRAP_ADMIN_EMAIL`, `BOOTSTRAP_ADMIN_PASSWORD`, and `BOOTSTRAP_ADMIN_NAME`. Those production credentials and database contain no local demo residents or payments.
+8. Change the initial password after the first sign-in, using the profile button in the top-right.
 
-Free Render web instances can sleep and are not appropriate for hostel operations. Render notes that free Postgres has a limited lifetime and no managed recovery/backups; select suitable paid database retention and arrange independent backups before storing real resident, financial, or emergency-contact data. Keep the database's public-access list closed.
+The GitHub Pages repository variable is not a secret; it contains only the public API address. Never add a database URL, Render key, password, or resident information to GitHub Pages. Keep private database inbound access closed.
+
+**This workflow prepares deployment; it does not itself publish the app or create a Render account.** Render account login, a connected repository, repository write/deploy access, and explicit review/approval of its current hosting charges are required. The workspace copy has no Git remote, so its changes must first be pushed to the connected repository. Free Render web services may sleep when idle, and the free PostgreSQL plan has retention/recovery limitations; review current Render plans and ensure appropriate independent backups before storing real resident, payment, or emergency-contact information.
+
+For local Wi-Fi access instead, use the separate instructions above. Do not expose the local-network HTTP setup directly to the public internet.
 
 ## Database design
 

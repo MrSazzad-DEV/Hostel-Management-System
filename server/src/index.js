@@ -1,5 +1,6 @@
 import "./config.js";
 import express from "express";
+import cors from "cors";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import helmet from "helmet";
@@ -19,6 +20,12 @@ const loginLimiter = rateLimit({
   legacyHeaders: false,
   message: { error: "Too many sign-in attempts. Please wait 15 minutes and try again." }
 });
+const allowedOrigins = new Set(
+  (process.env.CLIENT_ORIGINS || process.env.CLIENT_ORIGIN || "http://localhost:5173")
+    .split(",")
+    .map((origin) => origin.trim())
+    .filter(Boolean)
+);
 
 app.disable("x-powered-by");
 if (process.env.NODE_ENV === "production") {
@@ -39,6 +46,11 @@ app.use(helmet({
       upgradeInsecureRequests: []
     }
   } : false
+}));
+app.use(cors({
+  origin(origin, callback) {
+    callback(null, !origin || allowedOrigins.has(origin));
+  }
 }));
 app.use(express.json({ limit: "1mb" }));
 app.use((req, res, next) => {
