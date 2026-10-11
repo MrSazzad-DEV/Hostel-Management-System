@@ -1,4 +1,4 @@
-# Sazzad — Hostel Management System
+# Haven — Hostel Management System
 
 A full-stack hostel operations MVP built with React, Express, and PostgreSQL. It includes an authenticated staff workspace for resident records, room/bed occupancy, rent payments, and maintenance requests.
 
@@ -36,24 +36,22 @@ Do not expose the development/LAN setup directly to the public internet. Its loc
 
 **Demo login:** `admin@hostel.local` / `ChangeMe123!`. This MVP has no password-management screen or staff-provisioning UI. Before deployment, replace the demo account through a secure operator workflow, use a unique long `JWT_SECRET`, and serve the app over HTTPS. Do not use the sample credentials or secret in production.
 
-## Public website on GitHub Pages + secure API on Render
+## Public website on GitHub Pages + API on Render Free
 
-GitHub Pages serves static files; it cannot run Express or PostgreSQL. The existing public Pages address currently shows the repository's README, not the app. This project includes [`deploy-pages.yml`](.github/workflows/deploy-pages.yml) so Actions can build and publish the actual mobile-responsive React frontend at `https://mrsazzad-dev.github.io/Hostel-Management-System/`, while a Render HTTPS web service runs the API and a private PostgreSQL database.
+GitHub Pages serves static files; it cannot run Express or PostgreSQL. This project includes [`deploy-pages.yml`](.github/workflows/deploy-pages.yml) so Actions can build and publish the mobile-responsive React frontend at `https://mrsazzad-dev.github.io/Hostel-Management-System/`. A Render Free HTTPS web service runs the API, and a Neon Free PostgreSQL database stores the data.
 
 ### Publish and connect both services
 
-1. **Publish the project files** to the `main` branch of `mrsazzad-dev/Hostel-Management-System`. Keep `.env` out of Git. GitHub Pages showing the README means the app deployment has not yet run.
-2. On GitHub, open the repository's **Settings → Pages** and set the build/deployment source to **GitHub Actions**.
-3. On [Render](https://dashboard.render.com), open **New → Blueprint** and select the repository. Review the charges before creating any resources. [`render.yaml`](render.yaml) provisions the API service, a private Singapore PostgreSQL database, a strong generated JWT key, production security headers, and sign-in rate limits.
-4. When the first Render deploy is **Live**, copy the service's exact `https://…onrender.com` base URL. In GitHub repository **Settings → Secrets and variables → Actions → Variables**, create `VITE_API_URL` with that base URL (no trailing slash). It is the HTTPS API address, not the GitHub Pages address.
-5. On Render, keep `CLIENT_ORIGINS` set to `https://mrsazzad-dev.github.io`. The API only permits browser calls from the configured origin; the Postgres database has no public inbound IP allow list.
-6. Push the project changes to `main`, or run **Actions → Deploy public website → Run workflow**. The Pages workflow uses `VITE_API_URL` to build the website and publishes `client/dist`.
-7. Wait for the GitHub Actions run to pass, then open `https://mrsazzad-dev.github.io/Hostel-Management-System/` using mobile data or another Wi-Fi network. Create the first administrator with a new email and unique password (at least 16 characters) when Render prompts for `BOOTSTRAP_ADMIN_EMAIL`, `BOOTSTRAP_ADMIN_PASSWORD`, and `BOOTSTRAP_ADMIN_NAME`. Those production credentials and database contain no local demo residents or payments.
-8. Change the initial password after the first sign-in, using the profile button in the top-right.
+1. On [Neon](https://neon.tech), create a Free project in a region near Singapore and copy its PostgreSQL connection string. It must use SSL (Neon connection strings include `sslmode=require`). Keep this URL private.
+2. On [Render](https://dashboard.render.com), open **New → Blueprint** and select this repository. [`render.yaml`](render.yaml) provisions a Free API service, a generated JWT key, production security headers, and sign-in rate limits. During setup, enter the Neon connection string as `DATABASE_URL` and provide a new administrator email, name, and unique password (at least 16 characters).
+3. Wait for the Render service to become **Live**, then copy its exact `https://…onrender.com` base URL.
+4. In GitHub repository **Settings → Secrets and variables → Actions → Variables**, create `VITE_API_URL` with that base URL (no trailing slash). This is the HTTPS API address, not the GitHub Pages address.
+5. On GitHub, open **Settings → Pages** and set the publishing source to **GitHub Actions**. Run **Actions → Deploy public website → Run workflow**.
+6. Wait for the GitHub Actions run to pass, then open `https://mrsazzad-dev.github.io/Hostel-Management-System/` using mobile data or another Wi-Fi network. Change the initial password after the first sign-in, using the profile button in the top-right.
 
-The GitHub Pages repository variable is not a secret; it contains only the public API address. Never add a database URL, Render key, password, or resident information to GitHub Pages. Keep private database inbound access closed.
+The GitHub Pages repository variable is not a secret; it contains only the public API address. Never add a database URL, Render key, password, or resident information to GitHub Pages. Keep the Neon connection string and administrator credentials private.
 
-**This workflow prepares deployment; it does not itself publish the app or create a Render account.** Render account login, a connected repository, repository write/deploy access, and explicit review/approval of its current hosting charges are required. The workspace copy has no Git remote, so its changes must first be pushed to the connected repository. Free Render web services may sleep when idle, and the free PostgreSQL plan has retention/recovery limitations; review current Render plans and ensure appropriate independent backups before storing real resident, payment, or emergency-contact information.
+**Free-tier limitations:** Render may spin down the API after 15 minutes without traffic, making the first request take about a minute. Neon Free has usage limits and scales to zero when idle; review its current retention and backup terms. These free plans are intended for hobby/testing use, not sensitive production records. Make independent backups before storing real resident, payment, or emergency-contact information.
 
 For local Wi-Fi access instead, use the separate instructions above. Do not expose the local-network HTTP setup directly to the public internet.
 
